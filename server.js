@@ -1,19 +1,24 @@
-// ============================================================
-// MINI AI ∞ — UNLIMITED MODE (V49.1 SYNCED)
-// No rate limits | No queues | No breakers | Pure streaming
-// ============================================================
-
+require("dotenv").config();
 const express = require("express");
 const multer  = require("multer");
 const cors    = require("cors");
 const path    = require("path");
+const OpenAI  = require("openai");
 
 const app  = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-const OLLAMA_URL   = "http://127.0.0.1:11434";
-const CHAT_MODEL   = "llama3.1:latest";
-const VISION_MODEL = "llama3.2-vision:latest";
+// ============================================================
+// GROQ INITIALIZATION (RIP OLLAMA)
+// ============================================================
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1"
+});
+
+// We define the specific Groq models here
+const CHAT_MODEL   = "llama3-8b-8192";
+const VISION_MODEL = "llama-3.2-11b-vision-preview";
 
 // ============================================================
 // SYSTEM PROMPTS — ULTIMATE MINI AI
@@ -353,7 +358,6 @@ Deliver GPT-level depth.
 End naturally.
 `;
 
-// 🔥 NEW: HARD CODE SYSTEM PROMPT
 const SYSTEM_CODE_PROMPT = `
 You are a senior production engineer.
 
@@ -379,34 +383,33 @@ const upload = multer({
 });
 
 // ============================================================
-// HEALTH - FIXED FAIL-OPEN STATE
+// HEALTH - NOW PINGING GROQ INSTEAD OF OLLAMA
 // ============================================================
 
 app.get("/health", async (req, res) => {
   try {
-    const r = await fetch(`${OLLAMA_URL}/api/tags`);
-    const data = await r.json();
+    // Ping Groq to verify API key and connection
+    const modelsResponse = await groq.models.list();
+    const availableModels = modelsResponse.data.map(m => m.id);
 
     res.json({
       status: "online",
+      provider: "Groq",
       breakers: { chat: "CLOSED", vision: "CLOSED" },
-      chat_queue: { depth: 0 },
-      vision_queue: { depth: 0 },
-      models: data.models.map(m => m.name)
+      models: availableModels
     });
 
-  } catch {
+  } catch (err) {
     res.json({
-      status: "ollama disconnected",
+      status: "groq disconnected",
       breakers: { chat: "OPEN", vision: "OPEN" },
-      chat_queue: { depth: 0 },
-      vision_queue: { depth: 0 }
+      error: err.message
     });
   }
 });
 
 // ============================================================
-// CHAT STREAM — UNLIMITED & ROUTED
+// CHAT STREAM — GROQ Llama 3 8B
 // ============================================================
 
 app.post("/chat", async (req, res) => {
@@ -420,77 +423,37 @@ app.post("/chat", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("X-Accel-Buffering", "no");
 
-  // 🔥 DYNAMIC INTENT ROUTING
   const isCode = cognitiveIntent === "code";
   const activeSystemPrompt = isCode ? SYSTEM_CODE_PROMPT : SYSTEM_PROMPT;
-  const activeTemp = isCode ? 0.2 : 0.6;
-  const activeTopP = isCode ? 0.8 : 0.9;
-  const activeCtx  = isCode ? 8192 : 4096;
+  const activeTemp = isCode ? 0.2 : 0.7;
 
   try {
-    const upstream = await fetch(`${OLLAMA_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: CHAT_MODEL,
-        stream: true,
-        keep_alive: 300,
-        messages: [
-          { role: "system", content: activeSystemPrompt },
-          ...messages
-        ],
-        options: {
-          temperature: activeTemp,
-          num_predict: 2048,
-          num_ctx: activeCtx,
-          top_p: activeTopP
-        }
-      })
+    const stream = await groq.chat.completions.create({
+      model: CHAT_MODEL,
+      messages: [
+        { role: "system", content: activeSystemPrompt },
+        ...messages
+      ],
+      temperature: activeTemp,
+      stream: true
     });
 
-    if (!upstream.ok) {
-      const text = await upstream.text();
-      return res.end(JSON.stringify({ response: text }) + "\n");
-    }
-
-    const reader  = upstream.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop();
-
-      for (const line of lines) {
-        if (!line.trim()) continue;
-
-        try {
-          const parsed = JSON.parse(line);
-          const token =
-            parsed.message?.content ??
-            parsed.response ??
-            parsed.delta ??
-            "";
-
-          if (token) {
-            res.write(JSON.stringify({ response: token }) + "\n");
-          }
-        } catch {}
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        res.write(JSON.stringify({ response: content }) + "\n");
       }
     }
 
     res.end();
   } catch (err) {
+    console.error("GROQ CHAT ERROR:", err);
     res.end(JSON.stringify({ response: `❌ ${err.message}` }) + "\n");
   }
 });
 
 // ============================================================
-// IMAGE ANALYZE — UNLIMITED
+// IMAGE ANALYZE — GROQ LLAMA 3.2 VISION (OLLAMA REMOVED)
 // ============================================================
 
 app.post("/image-analyze", upload.single("image"), async (req, res) => {
@@ -500,77 +463,52 @@ app.post("/image-analyze", upload.single("image"), async (req, res) => {
 
   const question = req.body.question || "Analyze this image in full detail.";
   const base64   = req.file.buffer.toString("base64");
+  const mimeType = req.file.mimetype; // e.g., 'image/jpeg' or 'image/png'
   
+  // Groq requires standard base64 data URI format for vision
+  const imageUrl = `data:${mimeType};base64,${base64}`;
+
   console.log("Image size:", req.file.size);
   console.log("Question:", question);
-  console.log("Vision model call starting..."); // <-- Added Trace
+  console.log("Groq Vision model call starting...");
 
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache");
 
   try {
-    const upstream = await fetch(`${OLLAMA_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: VISION_MODEL,
-        stream: true,
-        keep_alive: 300,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: question, images: [base64] }
-        ],
-        options: {
-          temperature: 0.4,
-          num_predict: 1500,
-          num_ctx: 8192
+    const stream = await groq.chat.completions.create({
+      model: VISION_MODEL,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { 
+          role: "user", 
+          content: [
+            { type: "text", text: question },
+            { type: "image_url", image_url: { url: imageUrl } }
+          ] 
         }
-      })
+      ],
+      temperature: 0.4,
+      max_tokens: 1500, // Replaces num_predict
+      stream: true
     });
 
-    if (!upstream.ok) {
-      const text = await upstream.text();
-      return res.end(JSON.stringify({ response: text }) + "\n");
-    }
-
-    const reader  = upstream.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop();
-
-      for (const line of lines) {
-        if (!line.trim()) continue;
-
-        try {
-          const parsed = JSON.parse(line);
-          const token =
-            parsed.message?.content ??
-            parsed.response ??
-            "";
-
-          if (token) {
-            res.write(JSON.stringify({ response: token }) + "\n");
-          }
-        } catch {}
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        res.write(JSON.stringify({ response: content }) + "\n");
       }
     }
 
     res.end();
   } catch (err) {
-    console.error("VISION ERROR:", err); // <-- Added Hard Error Trace
+    console.error("GROQ VISION ERROR:", err);
     res.end(JSON.stringify({ response: `❌ ${err.message}` }) + "\n");
   }
 });
 
 // ============================================================
-// IMAGE GENERATE
+// IMAGE GENERATE (Pollinations stays, it's independent)
 // ============================================================
 
 app.post("/image-generate", async (req, res) => {
@@ -605,7 +543,7 @@ app.post("/image-generate", async (req, res) => {
 });
 
 // ============================================================
-// TELEMETRY (dummy endpoint for frontend)
+// TELEMETRY
 // ============================================================
 
 app.post("/telemetry/batch", (req, res) => {
@@ -615,6 +553,6 @@ app.post("/telemetry/batch", (req, res) => {
 // ============================================================
 
 app.listen(PORT, () => {
-  console.log("🚀 MINI AI ∞ ORCHESTRATOR RUNNING");
-  console.log("🌐 http://localhost:3000");
+  console.log("🚀 MINI AI ∞ ORCHESTRATOR RUNNING (100% GROQ POWERED)");
+  console.log(`🌐 http://localhost:${PORT}`);
 });
