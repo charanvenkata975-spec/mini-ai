@@ -430,23 +430,36 @@ app.post("/chat", async (req, res) => {
   const activeSystemPrompt = isCode ? SYSTEM_CODE_PROMPT : SYSTEM_PROMPT;
   const activeTemp = isCode ? 0.2 : 0.7;
 
+  // ELITE FIX: Hardened Message Sanitation Loop
+  const safeMessages = [];
+
+  for (const m of messages) {
+    if (!m || typeof m.content !== "string") continue;
+
+    const content = m.content.trim();
+    if (!content) continue;
+
+    let role = "user";
+
+    if (typeof m.role === "string") {
+      const r = m.role.trim().toLowerCase();
+
+      if (r === "assistant" || r === "bot" || r === "ai") {
+        role = "assistant";
+      } else if (r === "system") {
+        role = "system";
+      }
+    }
+
+    safeMessages.push({ role, content });
+  }
+
   try {
     const stream = await groq.chat.completions.create({
       model: CHAT_MODEL,
       messages: [
         { role: "system", content: activeSystemPrompt },
-        ...messages
-          .filter(m => m && typeof m.content === "string" && m.content.trim())
-          .map(m => {
-            let role = m.role;
-
-            if (role === "bot" || role === "ai") role = "assistant";
-            if (!["system", "user", "assistant"].includes(role)) {
-              role = "user";
-            }
-
-            return { role, content: m.content };
-          })
+        ...safeMessages
       ],
       temperature: activeTemp,
       stream: true
@@ -486,7 +499,7 @@ app.post("/image-analyze", upload.single("image"), async (req, res) => {
   console.log("Question:", question);
   console.log("Groq Vision model call starting...");
 
-  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Content-Type", "text-event-stream; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache");
 
   try {
