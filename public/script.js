@@ -1,6 +1,5 @@
 console.log("🚀 script.js – MINI AI ELITE NIGHTMARE v49.1 | BRUTAL SPEED ENGINE | ZERO STUBS");
-throw new Error("TEST CRASH");
-console.log("ACTIVE MODEL:", CHAT_MODEL);
+
 // ═══════════════════════════════════════════════
 // VH FIX
 // ═══════════════════════════════════════════════
