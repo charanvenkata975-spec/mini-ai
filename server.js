@@ -9,15 +9,15 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 
 // ============================================================
-// GROQ INITIALIZATION (RIP OLLAMA)
+// GROQ INITIALIZATION
 // ============================================================
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
   baseURL: "https://api.groq.com/openai/v1"
 });
 
-// We define the specific Groq models here
-const CHAT_MODEL   = "llama3-8b-8192";
+// FIXED: Using currently supported, active Groq models
+const CHAT_MODEL = "llama-3.1-8b-instant";
 const VISION_MODEL = "llama-3.2-11b-vision-preview";
 
 // ============================================================
@@ -395,13 +395,16 @@ app.get("/health", async (req, res) => {
     res.json({
       status: "online",
       provider: "Groq",
+      active_chat_model: CHAT_MODEL,
+      active_vision_model: VISION_MODEL,
       breakers: { chat: "CLOSED", vision: "CLOSED" },
-      models: availableModels
+      groq_models_available: availableModels.length
     });
 
   } catch (err) {
     res.json({
       status: "groq disconnected",
+      active_chat_model: CHAT_MODEL,
       breakers: { chat: "OPEN", vision: "OPEN" },
       error: err.message
     });
@@ -433,6 +436,17 @@ app.post("/chat", async (req, res) => {
       messages: [
         { role: "system", content: activeSystemPrompt },
         ...messages
+          .filter(m => m && typeof m.content === "string" && m.content.trim())
+          .map(m => {
+            let role = m.role;
+
+            if (role === "bot" || role === "ai") role = "assistant";
+            if (!["system", "user", "assistant"].includes(role)) {
+              role = "user";
+            }
+
+            return { role, content: m.content };
+          })
       ],
       temperature: activeTemp,
       stream: true
@@ -453,7 +467,7 @@ app.post("/chat", async (req, res) => {
 });
 
 // ============================================================
-// IMAGE ANALYZE — GROQ LLAMA 3.2 VISION (OLLAMA REMOVED)
+// IMAGE ANALYZE — GROQ LLAMA 3.2 VISION 
 // ============================================================
 
 app.post("/image-analyze", upload.single("image"), async (req, res) => {
@@ -489,7 +503,7 @@ app.post("/image-analyze", upload.single("image"), async (req, res) => {
         }
       ],
       temperature: 0.4,
-      max_tokens: 1500, // Replaces num_predict
+      max_tokens: 1500,
       stream: true
     });
 
