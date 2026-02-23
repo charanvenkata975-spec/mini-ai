@@ -1,5 +1,6 @@
 console.log("🚀 script.js – MINI AI ELITE NIGHTMARE v49.1 | BRUTAL SPEED ENGINE | ZERO STUBS");
-
+throw new Error("TEST CRASH");
+console.log("ACTIVE MODEL:", CHAT_MODEL);
 // ═══════════════════════════════════════════════
 // VH FIX
 // ═══════════════════════════════════════════════
@@ -738,11 +739,17 @@ async function sendMessage() {
       return;
     }
 
-    // ── CHAT: THIN CLIENT PAYLOAD ──
+    // ── CHAT: STRICT PAYLOAD SANITIZATION ──
     const detectedIntent = analyzeCognitiveIntent(safeText);
     
     await streamWithRetry(botMsgId, "/chat", {
-      messages: APP_STATE.chatMessages.filter(m => m.id !== botMsgId && !m.isLoading).map(m => ({ role: m.role, content: m.text })),
+      messages: APP_STATE.chatMessages
+        .filter(m => m.id !== botMsgId && !m.isLoading)
+        .map(m => ({
+          role: m.role === "bot" ? "assistant" : "user",
+          content: String(m.text || "").trim()
+        }))
+        .filter(m => m.content.length > 0), // Eliminate ghost messages completely
       cognitiveIntent: detectedIntent,
       sessionId: APP_STATE.stableSessionId
     }, localRequestId);
