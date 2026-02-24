@@ -1,4 +1,4 @@
-console.log("🚀 script.js – MINI AI ELITE NIGHTMARE v49.1 | BRUTAL SPEED ENGINE | ZERO STUBS");
+console.log("script.js – MINI AI ELITE NIGHTMARE v50.0 | BRUTAL SPEED ENGINE | ZERO EMOJI");
 
 // ═══════════════════════════════════════════════
 // VH FIX
@@ -27,20 +27,19 @@ const speakerBtn   = document.getElementById("speakerBtn");
 const charCounter  = document.getElementById("charCounter");
 
 // ═══════════════════════════════════════════════
-// SCROLL INTELLIGENCE
+// SCROLL INTELLIGENCE (CENTERED ABOVE CHAT BAR)
 // ═══════════════════════════════════════════════
 const scrollBtn = document.createElement("button");
 scrollBtn.id = "scrollDownBtn";
-scrollBtn.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-</svg>`;
+scrollBtn.innerHTML = "Scroll to Bottom";
 Object.assign(scrollBtn.style, {
-  position: "absolute", bottom: "90px", right: "20px",
+  position: "absolute", bottom: "90px", left: "50%", transform: "translateX(-50%)",
   background: "rgba(10,15,30,0.9)", border: "1px solid rgba(34,211,238,0.5)",
-  color: "#22d3ee", borderRadius: "50%", width: "40px", height: "40px",
+  color: "#22d3ee", borderRadius: "20px", padding: "8px 16px",
   display: "none", alignItems: "center", justifyContent: "center",
   cursor: "pointer", zIndex: "100", backdropFilter: "blur(5px)",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.5)", transition: "all 0.2s ease"
+  boxShadow: "0 4px 12px rgba(0,0,0,0.5)", transition: "all 0.2s ease",
+  fontWeight: "bold", fontSize: "12px", whiteSpace: "nowrap"
 });
 scrollBtn.onclick = () => { APP_STATE.userScrolledUp = false; scrollDown(true); };
 document.querySelector(".chat-container")?.appendChild(scrollBtn) || document.body.appendChild(scrollBtn);
@@ -58,7 +57,7 @@ const getStableSessionId = () => {
 };
 
 // ═══════════════════════════════════════════════
-// ENTERPRISE STATE v49.1 (BRUTAL SPEED)
+// ENTERPRISE STATE v50.0
 // ═══════════════════════════════════════════════
 const APP_STATE = {
   mode: "chat",
@@ -194,9 +193,7 @@ function recordCircuitFailure() {}
 // ═══════════════════════════════════════════════
 // ELITE: SAFETY FILTER (BYPASSED)
 // ═══════════════════════════════════════════════
-function applySafetyFilter(text) {
-  return text; 
-}
+function applySafetyFilter(text) { return text; }
 
 // ═══════════════════════════════════════════════
 // STATUS & TOAST
@@ -240,7 +237,7 @@ async function pollHealth() {
     const res  = await fetch("/health", { signal: AbortSignal.timeout(4000) });
     const data = await res.json();
     if (data.breakers && (data.breakers.chat === "OPEN" || data.breakers.vision === "OPEN")) {
-      return showSystemError("⚠️ AI Core is currently recovering.");
+      return showSystemError("AI Core is currently recovering.");
     } else { hideSystemError(); }
 
     const totalDepth = (data.chat_queue?.depth || 0) + (data.vision_queue?.depth || 0);
@@ -252,18 +249,26 @@ async function pollHealth() {
       if (queueBadge) queueBadge.style.display = "none";
       if (!APP_STATE.isSending) setStatus("online");
     }
-  } catch { showSystemError("⚠️ Disconnected from AI Gateway."); }
+  } catch { showSystemError("Disconnected from AI Gateway."); }
 }
 
 // ═══════════════════════════════════════════════
-// EVENT LISTENERS
+// EVENT LISTENERS (Optimized with requestAnimationFrame)
 // ═══════════════════════════════════════════════
-window.addEventListener("offline", () => { APP_STATE.connectionQuality = "offline"; showSystemError("⚠️ Internet connection lost."); });
+window.addEventListener("offline", () => { APP_STATE.connectionQuality = "offline"; showSystemError("Internet connection lost."); });
 window.addEventListener("online", () => { updateConnectionQuality(); hideSystemError(); pollHealth(); if (APP_STATE.pendingRetryMessage) retryPendingMessage(); });
+
+let scrollTicking = false;
 chatBox.addEventListener("scroll", () => {
-  const nearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 40;
-  APP_STATE.userScrolledUp = !nearBottom;
-  scrollBtn.style.display = APP_STATE.userScrolledUp ? "flex" : "none";
+  if (!scrollTicking) {
+    window.requestAnimationFrame(() => {
+      const nearBottom = chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 40;
+      APP_STATE.userScrolledUp = !nearBottom;
+      scrollBtn.style.display = APP_STATE.userScrolledUp ? "flex" : "none";
+      scrollTicking = false;
+    });
+    scrollTicking = true;
+  }
 });
 
 if ("speechSynthesis" in window) {
@@ -289,12 +294,12 @@ window.showImagePreview = function(file) {
     const safeName = escapeHtml(file.name.slice(0,30)) + (file.name.length > 30 ? "…" : "");
     wrap.innerHTML = `
       <img src="${e.target.result}" style="width:48px;height:48px;border-radius:10px;object-fit:cover;border:1px solid rgba(255,255,255,0.15);flex-shrink:0">
-      <div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safeName}</div><div style="font-size:10px;color:rgba(34,211,238,0.85);margin-top:3px">${(file.size/1024).toFixed(0)} KB · Ready ✅</div></div>
+      <div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${safeName}</div><div style="font-size:10px;color:rgba(34,211,238,0.85);margin-top:3px">${(file.size/1024).toFixed(0)} KB · Ready</div></div>
       <button onclick="removeImagePreview()" style="background:rgba(248,113,113,0.18);border:1px solid rgba(248,113,113,0.35);color:#f87171;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>`;
     const inputArea = document.querySelector(".input-area");
     if (inputArea) { inputArea.style.position = "relative"; inputArea.appendChild(wrap); }
     if (attachBtn) { attachBtn.style.background = "rgba(34,211,238,0.28)"; attachBtn.style.borderColor = "rgba(34,211,238,0.55)"; }
-    userInput.placeholder = "What would you like me to analyze? 🔍"; userInput.focus();
+    userInput.placeholder = "What would you like me to analyze?"; userInput.focus();
   };
   reader.readAsDataURL(file);
 };
@@ -304,9 +309,9 @@ window.removeImagePreview = function() {
   APP_STATE.pendingImageFile = null; APP_STATE.pendingImageB64 = null;
   if (imageInput) imageInput.value = "";
   if (attachBtn) { attachBtn.style.background = ""; attachBtn.style.borderColor = ""; }
-  userInput.placeholder = APP_STATE.mode === "image-gen" ? "Describe your artistic vision... 🎨"
-    : APP_STATE.mode === "image-analyze" ? "Upload an image for me to analyze... 🔍"
-    : "Talk to me, how can I help? ⚡";
+  userInput.placeholder = APP_STATE.mode === "image-gen" ? "Describe your artistic vision..."
+    : APP_STATE.mode === "image-analyze" ? "Upload an image for me to analyze..."
+    : "Talk to me, how can I help?";
 };
 
 attachBtn?.addEventListener("click", () => imageInput?.click());
@@ -320,12 +325,10 @@ imageInput?.addEventListener("change", e => {
 });
 
 window.setMode = function(mode) {
-
-  if (mode !== "chat") {
-    showToast("This feature is under maintenance ⚙️", "warning");
+  if (mode !== "chat" && mode !== "image-gen" && mode !== "image-analyze") {
+    showToast("This feature is under maintenance.", "warning");
     return;
   }
-
   APP_STATE.mode = mode;
   document.querySelectorAll(".mode-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.mode === mode);
@@ -333,9 +336,9 @@ window.setMode = function(mode) {
   });
   if (attachBtn) attachBtn.style.opacity = mode === "image-analyze" ? "1" : "0.7";
   if (mode !== "image-analyze") window.removeImagePreview();
-  userInput.placeholder = mode === "image-gen" ? "Describe your artistic vision... 🎨"
-    : mode === "image-analyze" ? "Upload an image... 🔍"
-    : "Talk to me, how can I help? ⚡";
+  userInput.placeholder = mode === "image-gen" ? "Describe your artistic vision..."
+    : mode === "image-analyze" ? "Upload an image..."
+    : "Talk to me, how can I help?";
   userInput.focus();
 };
 
@@ -347,7 +350,7 @@ function parseMarkdown(text) {
   html = html.replace(/\r\n/g, "\n");
   html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
     const id = "code_" + Math.random().toString(36).substr(2,9);
-    return `<div class="code-wrapper"><div class="code-header"><span class="code-lang">${lang || "Code"}</span><button class="code-copy" onclick="copyCodeText('${id}')">📋 Copy</button></div><pre class="code-content"><code id="${id}">${code.trim()}</code></pre></div>`;
+    return `<div class="code-wrapper"><div class="code-header"><span class="code-lang">${lang || "Code"}</span><button class="code-copy" onclick="copyCodeText('${id}')">Copy</button></div><pre class="code-content"><code id="${id}">${code.trim()}</code></pre></div>`;
   });
   html = html.replace(/`([^`\n]+)`/g, '<span class="inline-code">$1</span>');
   html = html.replace(/^#### (.+)$/gm, "<h4>$1</h4>").replace(/^### (.+)$/gm,  "<h3>$1</h3>").replace(/^## (.+)$/gm,   "<h2>$1</h2>").replace(/^# (.+)$/gm,    "<h2>$1</h2>");
@@ -376,11 +379,10 @@ function parseMarkdown(text) {
 function isSafeMarkdown(text) { return (text.match(/```/g) || []).length % 2 === 0; }
 
 // ═══════════════════════════════════════════════
-// SVG ICONS (inline, no re-declaration)
+// SVG ICONS
 // ═══════════════════════════════════════════════
 const SVG_SEND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>`;
 const SVG_STOP = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`;
-
 const editIcon     = () => `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>`;
 const translateIcon = () => `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>`;
 const retryIcon    = () => `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>`;
@@ -401,12 +403,12 @@ function buildActionBar(msg) {
       <div style="position:relative;display:inline-block">
         <button class="action-btn" onclick="toggleTranslateMenu('${msg.id}')" title="Translate">${translateIcon()}</button>
         <div id="trans_${msg.id}" class="dropdown-menu">
-          <button class="dropdown-item" onclick="translateMsg('${msg.id}','Telugu')">🇮🇳 Telugu</button>
-          <button class="dropdown-item" onclick="translateMsg('${msg.id}','Hindi')">🇮🇳 Hindi</button>
-          <button class="dropdown-item" onclick="translateMsg('${msg.id}','English')">🇺🇸 English</button>
-          <button class="dropdown-item" onclick="translateMsg('${msg.id}','French')">🇫🇷 French</button>
-          <button class="dropdown-item" onclick="translateMsg('${msg.id}','Japanese')">🇯🇵 Japanese</button>
-          <button class="dropdown-item" onclick="translateMsg('${msg.id}','Spanish')">🇪🇸 Spanish</button>
+          <button class="dropdown-item" onclick="translateMsg('${msg.id}','Telugu')">Telugu</button>
+          <button class="dropdown-item" onclick="translateMsg('${msg.id}','Hindi')">Hindi</button>
+          <button class="dropdown-item" onclick="translateMsg('${msg.id}','English')">English</button>
+          <button class="dropdown-item" onclick="translateMsg('${msg.id}','French')">French</button>
+          <button class="dropdown-item" onclick="translateMsg('${msg.id}','Japanese')">Japanese</button>
+          <button class="dropdown-item" onclick="translateMsg('${msg.id}','Spanish')">Spanish</button>
         </div>
       </div>
       <button class="action-btn" onclick="regenerateMessage('${msg.id}')" title="Regenerate">${retryIcon()}</button>
@@ -496,10 +498,10 @@ function toggleSendStop(sending) {
 }
 
 // ═══════════════════════════════════════════════
-// ELITE: RETRY + EXPONENTIAL BACKOFF + CIRCUIT BREAKER
+// ELITE: RETRY + EXPONENTIAL BACKOFF
 // ═══════════════════════════════════════════════
 async function streamWithRetry(botId, endpoint, payload, localRequestId, isFormData = false, attempt = 0) {
-  const MAX_RETRIES = 10; // UNRESTRICTED
+  const MAX_RETRIES = 10; 
   const BACKOFF_MS  = [0, 1500, 4000, 8000, 15000, 30000, 60000, 60000, 60000, 60000, 60000];
   if (!checkCircuitBreaker()) throw new Error("Circuit breaker OPEN.");
   try {
@@ -511,8 +513,8 @@ async function streamWithRetry(botId, endpoint, payload, localRequestId, isFormD
     const c = classifyError(err);
     if (!c.retryable || attempt >= MAX_RETRIES) { recordCircuitFailure(); throw err; }
     const delay = BACKOFF_MS[attempt + 1];
-    console.warn(`[v49 Retry] Attempt ${attempt + 1} — ${c.msg} — waiting ${delay}ms`);
-    updateMessageContent(botId, `⚡ ${c.msg} (${attempt + 1}/${MAX_RETRIES})`, false);
+    console.warn(`[Retry] Attempt ${attempt + 1} — ${c.msg} — waiting ${delay}ms`);
+    updateMessageContent(botId, `Retrying: ${c.msg} (${attempt + 1}/${MAX_RETRIES})`, false);
     await sleep(delay);
     if (localRequestId !== APP_STATE.currentRequestId) return "";
     return streamWithRetry(botId, endpoint, payload, localRequestId, isFormData, attempt + 1);
@@ -520,7 +522,7 @@ async function streamWithRetry(botId, endpoint, payload, localRequestId, isFormD
 }
 
 // ═══════════════════════════════════════════════
-// CORE STREAMING ENGINE v49.1 (BRUTAL SPEED) 
+// CORE STREAMING ENGINE
 // ═══════════════════════════════════════════════
 async function streamResponse(botId, endpoint, payload, localRequestId, isFormData = false) {
   APP_STATE.currentAbortCtrl    = new AbortController();
@@ -529,7 +531,7 @@ async function streamResponse(botId, endpoint, payload, localRequestId, isFormDa
   APP_STATE.latency.requestStart = performance.now();
   APP_STATE.latency.firstTokenMs = 0;
 
-  const TIMEOUT = 120000; // 2 Minutes Hard Max
+  const TIMEOUT = 120000; 
   const timeoutGuard = setTimeout(() => {
     APP_STATE.currentAbortCtrl.abort();
   }, TIMEOUT);
@@ -557,12 +559,10 @@ async function streamResponse(botId, endpoint, payload, localRequestId, isFormDa
   let streamEnded  = false;
   const botMsgObj  = APP_STATE.chatMessages.find(m => m.id === botId);
 
-  // ── 🔴 BRUTAL ULTRA-FAST DATA DUMP ──
   function runTypingLoop() {
     if (localRequestId !== APP_STATE.currentRequestId) { APP_STATE._typingInterval = null; return; }
     if (!APP_STATE._tokenBuffer.length)                { APP_STATE._typingInterval = null; return; }
 
-    // Grab a massive 150-character block at once
     const size = Math.min(APP_STATE._tokenBuffer.length, 150);
     const chunk = APP_STATE._tokenBuffer.slice(0, size);
     APP_STATE._tokenBuffer = APP_STATE._tokenBuffer.slice(size);
@@ -576,9 +576,6 @@ async function streamResponse(botId, endpoint, payload, localRequestId, isFormDa
       });
     }
 
-    // Fixed 100ms interval.
-    // 150 characters every 100ms = 1500 chars every 1 second.
-    // That means in exactly 0.5 seconds, it will forcefully print 750 characters (10+ lines).
     APP_STATE._typingInterval = setTimeout(runTypingLoop, 100);
   }
 
@@ -654,14 +651,13 @@ async function streamResponse(botId, endpoint, payload, localRequestId, isFormDa
       intent:       detectedIntent,
       quality:      APP_STATE.connectionQuality
     });
-    console.log(`[v49 Perf] 🕐 First: ${Math.round(APP_STATE.latency.firstTokenMs)}ms | ⏱ Total: ${Math.round(APP_STATE.latency.totalMs)}ms | 📡 ${APP_STATE.streamBytesReceived}B`);
 
     return uiFull;
   }
 }
 
 // ═══════════════════════════════════════════════
-// CORE SEND LOGIC v49.1 (BRUTAL SPEED) 
+// CORE SEND LOGIC 
 // ═══════════════════════════════════════════════
 async function sendMessage() {
   if (APP_STATE.isSending) return;
@@ -669,7 +665,6 @@ async function sendMessage() {
   const file    = APP_STATE.pendingImageFile;
   if (!rawText && !file) return;
 
-  // UNRESTRICTED: Spam Guard bypassed
   const nowMs = Date.now();
   APP_STATE.lastSentText = rawText;
   APP_STATE.lastSentTime = nowMs;
@@ -710,7 +705,7 @@ async function sendMessage() {
       const prompt = safeText || "beautiful cinematic landscape";
       const botObj = APP_STATE.chatMessages.find(m => m.id === botMsgId);
       botObj.isLoading = false;
-      updateMessageContent(botMsgId, "## 🎨 Generating Masterpiece...\n\nProcessing... ⚡", true);
+      updateMessageContent(botMsgId, "## Generating Image...\n\nProcessing...", true);
       APP_STATE.currentAbortCtrl = new AbortController();
       const res  = await fetch("/image-generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -720,9 +715,9 @@ async function sendMessage() {
       if (data.error) throw new Error(data.error);
       if (localRequestId === APP_STATE.currentRequestId) {
         botObj.imageUrl = data.imageUrl;
-        updateMessageContent(botMsgId, `## ✨ Masterpiece Created!\n**Vision:** *"${escapeHtml(prompt.slice(0,60))}"*\n\nTap to examine.`, false);
+        updateMessageContent(botMsgId, `## Image Created!\n**Vision:** *"${escapeHtml(prompt.slice(0,60))}"*\n\nTap to examine.`, false);
         rebuildActionBar(botMsgId);
-        showToast("Generated! 🎨");
+        showToast("Generated!");
         enqueueTelemetry({ event: "image_generated", promptLen: prompt.length });
       }
       return;
@@ -738,7 +733,6 @@ async function sendMessage() {
       return;
     }
 
-    // ── CHAT: STRICT PAYLOAD SANITIZATION ──
     const detectedIntent = analyzeCognitiveIntent(safeText);
     
     await streamWithRetry(botMsgId, "/chat", {
@@ -748,7 +742,7 @@ async function sendMessage() {
           role: m.role === "bot" ? "assistant" : "user",
           content: String(m.text || "").trim()
         }))
-        .filter(m => m.content.length > 0), // Eliminate ghost messages completely
+        .filter(m => m.content.length > 0), 
       cognitiveIntent: detectedIntent,
       sessionId: APP_STATE.stableSessionId
     }, localRequestId);
@@ -764,12 +758,12 @@ async function sendMessage() {
       const c = classifyError(err);
 
       if (c.type === "abort") {
-        updateMessageContent(botMsgId, "⏹ *Halted.*", false);
+        updateMessageContent(botMsgId, "*Halted.*", false);
       } else if (c.type === "offline") {
         updateMessageContent(botMsgId, "You are offline. Message queued for retry.", false);
         APP_STATE.pendingRetryMessage = rawText;
       } else {
-        updateMessageContent(botMsgId, `## ❌ Alert\n**Issue:** ${escapeHtml(c.msg)}`, false);
+        updateMessageContent(botMsgId, `## Alert\n**Issue:** ${escapeHtml(c.msg)}`, false);
         showToast(c.msg.slice(0,52), "error");
         enqueueTelemetry({ event: "error", errorType: c.type, msg: c.msg.slice(0,80) });
       }
@@ -785,22 +779,46 @@ async function sendMessage() {
   }
 }
 
-// ── OFFLINE RETRY ──
 async function retryPendingMessage() {
   if (!APP_STATE.pendingRetryMessage || APP_STATE.isSending) return;
   const msg = APP_STATE.pendingRetryMessage;
   APP_STATE.pendingRetryMessage = null;
   userInput.value = msg;
-  showToast("Back online — retrying... ⚡", "success");
+  showToast("Back online — retrying...", "success");
   await sleep(800);
   await sendMessage();
 }
 
 // ═══════════════════════════════════════════════
-// ALL INTERACTIONS — ZERO STUBS
+// ASYNC COPY MECHANICS 
 // ═══════════════════════════════════════════════
+window.copyMessage = async function(id) {
+  const msg = APP_STATE.chatMessages.find(m => m.id === id); 
+  if (!msg) return;
+  try {
+    if (!navigator.clipboard) throw new Error("Clipboard API missing");
+    await navigator.clipboard.writeText(msg.text);
+    showToast("Copied");
+  } catch(e) {
+    showToast("Clipboard unavailable", "error");
+  }
+};
 
-// ── EDIT ──
+window.copyCodeText = async function(codeId) {
+  const text = document.getElementById(codeId)?.innerText;
+  if (!text) return;
+  try {
+    if (!navigator.clipboard) throw new Error("Clipboard API missing");
+    await navigator.clipboard.writeText(text);
+    showToast("Copied");
+  } catch(e) {
+    showToast("Clipboard unavailable", "error");
+  }
+};
+
+// ═══════════════════════════════════════════════
+// EDIT & REGENERATE
+// ═══════════════════════════════════════════════
 window.startEdit = function(id) {
   const msg = APP_STATE.chatMessages.find(m => m.id === id); if (!msg) return;
   const el  = document.getElementById(`content_${id}`);       if (!el)  return;
@@ -808,7 +826,7 @@ window.startEdit = function(id) {
     <textarea id="edit_${id}" class="edit-textarea">${escapeHtml(msg.text)}</textarea>
     <div class="edit-actions">
       <button class="edit-cancel-btn" onclick="renderChat()">Cancel</button>
-      <button class="edit-save-btn"   onclick="saveEdit('${id}')">✅ Update</button>
+      <button class="edit-save-btn"   onclick="saveEdit('${id}')">Update</button>
     </div>`;
   document.getElementById(`edit_${id}`)?.focus();
 };
@@ -822,26 +840,12 @@ window.saveEdit = async function(id) {
   renderChat(); userInput.value = newText; await sendMessage();
 };
 
-// ── REGENERATE ──
 window.regenerateMessage = async function(botId) {
   const idx = APP_STATE.chatMessages.findIndex(m => m.id === botId); if (idx <= 0) return;
   const prevText = APP_STATE.chatMessages[idx - 1]?.text?.replace(/\[Image Attached\]/g,"").trim();
   if (!prevText) return;
   APP_STATE.chatMessages = APP_STATE.chatMessages.slice(0, idx);
   renderChat(); userInput.value = prevText; await sendMessage();
-};
-
-// ── COPY ──
-window.copyMessage = function(id) {
-  if (!navigator.clipboard) return showToast("Clipboard unavailable", "error");
-  const msg = APP_STATE.chatMessages.find(m => m.id === id); if (!msg) return;
-  navigator.clipboard.writeText(msg.text).then(() => showToast("Copied! ✅"));
-};
-
-window.copyCodeText = function(codeId) {
-  if (!navigator.clipboard) return showToast("Clipboard unavailable", "error");
-  const text = document.getElementById(codeId)?.innerText;
-  if (text) navigator.clipboard.writeText(text).then(() => showToast("Copied! 📋"));
 };
 
 // ── TRANSLATE DROPDOWN ──
@@ -879,7 +883,7 @@ window.translateMsg = async function(id, lang) {
     if (localRequestId === APP_STATE.currentRequestId) {
       const botObj = APP_STATE.chatMessages.find(m => m.id === botId);
       if (botObj) botObj.isLoading = false;
-      updateMessageContent(botId, "❌ Translation failed.", false);
+      updateMessageContent(botId, "Translation failed.", false);
     }
   } finally {
     if (localRequestId === APP_STATE.currentRequestId) { APP_STATE.isSending = false; toggleSendStop(false); }
@@ -889,7 +893,7 @@ window.translateMsg = async function(id, lang) {
   }
 };
 
-// ── TTS ──
+// ── TTS MEMORY LEAK GUARDED ──
 window.toggleReadMessage = function(id) {
   if (!("speechSynthesis" in window)) return showToast("TTS not supported", "error");
   if (APP_STATE.currentlyReadingId === id) {
@@ -906,7 +910,7 @@ window.toggleReadMessage = function(id) {
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
     .replace(/\s{2,}/g, " ").trim();
 
-  const utt  = new SpeechSynthesisUtterance(clean);
+  let utt  = new SpeechSynthesisUtterance(clean);
   const lang = detectLanguage(clean);
   if (lang === "telugu") {
     utt.lang  = "te-IN";
@@ -920,7 +924,14 @@ window.toggleReadMessage = function(id) {
              || APP_STATE.cachedVoices.find(v => v.lang.startsWith("en")) || null;
     utt.rate  = 1.05; utt.pitch = 1.0;
   }
-  utt.onend = utt.onerror = () => { APP_STATE.currentlyReadingId = null; rebuildActionBar(id); };
+  
+  // Guard against TTS engine hanging and locking up memory
+  utt.onend = utt.onerror = () => { 
+    APP_STATE.currentlyReadingId = null; 
+    rebuildActionBar(id); 
+    utt = null; 
+  };
+  
   if (APP_STATE.voiceEnabled) speechSynthesis.speak(utt);
 };
 
@@ -928,7 +939,7 @@ window.toggleVoice = function(v) {
   APP_STATE.voiceEnabled = v;
   if (!v) { speechSynthesis.cancel(); APP_STATE.currentlyReadingId = null; }
   if (speakerBtn) speakerBtn.style.opacity = v ? "1" : "0.45";
-  showToast(v ? "Voice ON 🔊" : "Voice OFF 🔇");
+  showToast(v ? "Voice ON" : "Voice OFF");
 };
 
 // ═══════════════════════════════════════════════
@@ -989,7 +1000,7 @@ userInput.addEventListener("keydown", e => {
 userInput.addEventListener("input", () => { autoResizeInput(); updateCharCounter(); });
 
 // ═══════════════════════════════════════════════
-// STORAGE (YOUR pv_history_v2 key — kept)
+// STORAGE
 // ═══════════════════════════════════════════════
 function stripImagesForStorage(messages) {
   return messages.map(msg => {
@@ -1016,7 +1027,7 @@ function saveSession() {
     }
     localStorage.setItem("pv_history_v2", JSON.stringify(APP_STATE.allChatSessions));
     renderHistorySidebar();
-  } catch { console.warn("[v49] Storage quota exceeded."); }
+  } catch { console.warn("[Storage] Quota exceeded."); }
 }
 
 // ═══════════════════════════════════════════════
@@ -1032,7 +1043,7 @@ function renderHistorySidebar() {
   [...APP_STATE.allChatSessions].reverse().forEach((session, revIdx) => {
     const idx = APP_STATE.allChatSessions.length - 1 - revIdx;
     if (!session?.length) return;
-    const rawTitle = session.find(m => m.role === "user" && !m.isHidden)?.text?.replace(/\[Image Attached\]/g,"🖼") || "Chat Session";
+    const rawTitle = session.find(m => m.role === "user" && !m.isHidden)?.text?.replace(/\[Image Attached\]/g,"[Image]") || "Chat Session";
     const title    = rawTitle.slice(0,38) + (rawTitle.length > 38 ? "…" : "");
     const item     = document.createElement("div");
     item.className = `history-item${idx === APP_STATE.activeSessionIndex ? " active-session" : ""}`;
@@ -1066,7 +1077,7 @@ window.newChat = function(close = true) {
   window.removeImagePreview();
   APP_STATE.chatMessages = [{
     id: generateId(), role: "bot",
-    text: "⚡ MINI AI v49.1 — Brutal Speed Engine. Ready."
+    text: "MINI AI v50.0 — Brutal Speed Engine. Ready."
   }];
   renderChat();
   if (close) window.closeSidebar();
@@ -1106,16 +1117,4 @@ document.addEventListener("DOMContentLoaded", () => {
   userInput.focus();
   pollHealth();
   APP_STATE.healthInterval = setInterval(pollHealth, 10000);
-
-  console.log("🚀 [v49.1 Init] MINI AI ELITE THIN CLIENT loaded");
-  console.log("[v49.1 Session]", APP_STATE.stableSessionId);
-  console.table({
-    circuitBreaker:  APP_STATE.circuitBreaker.state,
-    safety:          APP_STATE.safetyEnabled,
-    telemetry:       APP_STATE.telemetryEnabled,
-    connection:      APP_STATE.connectionQuality,
-    adaptiveTimeout: APP_STATE.adaptiveTimeout + "ms",
-    sessions:        APP_STATE.allChatSessions.length,
-    sessionId:       APP_STATE.stableSessionId.slice(0,20) + "..."
-  });
 });
